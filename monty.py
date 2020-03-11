@@ -57,13 +57,51 @@ Ryan
 '''
 from datetime import datetime as dt
 from datetime import timedelta as td
+import io
 import uuid
 import os
 
-from flask import abort, jsonify, Blueprint, url_for, Flask, jsonify, request
+from flask import Response, Flask, request
 
 app = Flask(__name__)
 app.log = []
+
+
+# # HELPER METHODS
+
+
+def qps(log):
+    '''
+    get # of queries in the last second
+    '''
+    return len(list(lambda:
+                    i for i in log if i['timestamp'] > int((dt.now() - td(seconds=1)).timestamp())))
+
+
+def qpm(log):
+    '''
+    get # of queries in the last minute
+    '''
+    return len(list(lambda:
+                    i for i in log if i['timestamp'] > int((dt.now() - td(seconds=60)).timestamp())))
+
+
+def qpt(logs):
+    '''
+    get a list of queries by request path
+    '''
+    path_list = []
+    for log in logs:
+        if not log['path'] in path_list:
+            path_list.append(log['path'])
+    c = {}
+    for path in path_list:
+        c[path] = len(list(lambda:
+                           i for i in logs if i['path'] == path))
+    return c
+
+
+# # ROUTES
 
 
 @app.before_request
@@ -100,43 +138,18 @@ def store(filename):
 
             HTTP/404 if the file_name is not present in local repository
 
-    TODO: doesn't currently use streams, just returns the first line in a file
     '''
-    print(os.getcwd())
-    if os.path.exists(os.getcwd()+'/'+filename):
+    def stream():
         with open(filename) as data:
             for line in data:
-                return line
+                yield str(line)
+
+    if os.path.exists(os.getcwd() + '/' + filename):
+        with io.StringIO(filename) as data:
+            return Response(stream())
+
     else:
         return "File not Found", 404
-
-
-def qps(log):
-    '''
-    get # of queries in the last second
-    '''
-    return len(list(lambda:
-                    i for i in log if i['timestamp'] > int((dt.now() - td(seconds=1)).timestamp())))
-
-
-def qpm(log):
-    '''
-    get # of queries in the last minute
-    '''
-    return len(list(lambda:
-                    i for i in log if i['timestamp'] > int((dt.now() - td(seconds=60)).timestamp())))
-
-
-def qpt(logs):
-    path_list = []
-    for log in logs:
-        if not log['path'] in path_list:
-            path_list.append(log['path'])
-    c = {}
-    for path in path_list:
-        c[path] = len(list(lambda:
-                           i for i in logs if i['path'] == path))
-    return c
 
 
 @app.route('/stats')
@@ -158,4 +171,4 @@ def stats():
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)

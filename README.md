@@ -13,4 +13,4 @@ Build in Python3
 
 > python monty.py
 
-the API is now available at http://127.0.0.1:5000/
+the API is then available at http://127.0.0.1:5000/

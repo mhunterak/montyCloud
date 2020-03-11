@@ -1,0 +1,67 @@
+swagger: "2.0"
+info:
+  description: "We have designed a distributed, domain driven microservice platform. Every communication between the domains happen through events."
+  version: "0.0.0"
+  title: "Monty Cloud Code Challenge"
+  termsOfService: "https://www.montycloud.com/"
+  contact:
+    email: "Max@montycloud.com"
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+host: "127.0.0.1:5000"
+basePath: "/"
+tags:
+- name: "health-check"
+  description: "Get API status"
+- name: "store"
+  description: "Access datastore"
+- name: "stats"
+  description: "Get API satistics"
+schemes:
+- "http"
+paths:
+  /health-check:
+    get:
+      tags:
+      - "health-check"
+      summary: "Get API status"
+      description: "Get API status"
+      operationId: "health_check"
+      responses:
+        204:
+          description: "No content"
+  /store/{file_name}:
+    get:
+      tags:
+      - "store"
+      summary: "Data store endpoint"
+      description: "Return a stream of data stored in selected file, if file_name is found"
+      operationId: "store"
+      produces:
+      - "application/stream+json"
+      parameters:
+      - name: "file_name"
+        in: "path"
+        description: "file name to load"
+        required: true
+        type: "string"
+        items:
+          type: "string"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            type: "file"
+        404:
+          description: "File not found in directory"
+  /stats:
+    get:
+      tags:
+      - "stats"
+      summary: "Get API server metrics"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "successful operation"
